@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import secrets
 import signal
 import subprocess
 import sys
@@ -166,7 +167,12 @@ if __name__ == "__main__":
         existing = {a["username"] for a in account_manager.list_active_accounts()}
         for username in args.accounts:
             if username not in existing:
-                account_manager.add_account(username, "placeholder_password", {"udid": f"emulator-{abs(hash(username)) % 10000:04d}"})
+                generated_password = secrets.token_urlsafe(24)
+                account_manager.add_account(
+                    username,
+                    generated_password,
+                    {"udid": f"emulator-{abs(hash(username)) % 10000:04d}"},
+                )
 
     celery_app = build_celery_app(cfg)
     worker = start_celery_worker() if not args.dry_run else None

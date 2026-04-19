@@ -207,7 +207,6 @@ class AccountManager:
     def _to_dict(record: AccountRecord) -> dict[str, Any]:
         return {
             "username": record.username,
-            "password": record.password,
             "assigned_proxy": record.assigned_proxy,
             "device_fingerprint": record.device_fingerprint,
             "session_status": record.session_status,

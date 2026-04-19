@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
-from api.routes import account_manager, get_stats
+from api.routes import account_manager, proxy_manager, session_manager, snap_sender, upsell_strategy
 
 app = FastAPI(title="Snapchat Bot Dashboard")
 
@@ -62,4 +62,14 @@ def dashboard_accounts() -> JSONResponse:
 @app.get("/dashboard/api/stats")
 def dashboard_stats() -> JSONResponse:
     """Proxy endpoint returning stats for dashboard."""
-    return JSONResponse(content=get_stats(_="dev-local-key"))
+    sent = sum(1 for s in snap_sender.delivery_status.values() if s.get("status") == "sent")
+    failed = sum(1 for s in snap_sender.delivery_status.values() if s.get("status") == "failed")
+    payload = {
+        "active_accounts": len(account_manager.list_active_accounts()),
+        "active_sessions": session_manager.get_active_sessions(),
+        "proxy_stats": proxy_manager.get_proxy_stats(),
+        "snap_sent": sent,
+        "snap_failed": failed,
+        "upsell": upsell_strategy.get_upsell_stats(),
+    }
+    return JSONResponse(content=payload)

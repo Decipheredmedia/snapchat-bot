@@ -35,6 +35,7 @@ class PaymentGateway:
         self.local_payments: dict[str, dict[str, Any]] = {}
         self.payment_log = Path("data/payment/payment_status.csv")
         self.payment_log.parent.mkdir(parents=True, exist_ok=True)
+        self.is_valid_stripe_key = bool(self.stripe_api_key) and not self.stripe_api_key.startswith("sk_test_replace")
         if stripe and self.stripe_api_key:
             stripe.api_key = self.stripe_api_key
 
@@ -64,7 +65,7 @@ class PaymentGateway:
     def create_stripe_payment_link(self, amount: float, currency: str, description: str) -> dict[str, str]:
         """Create Stripe payment link or robust local fallback."""
         currency = currency or self.default_currency
-        if stripe and self.stripe_api_key and not self.stripe_api_key.startswith("sk_test_replace"):
+        if stripe and self.is_valid_stripe_key:
             product = stripe.Product.create(name=description)
             price = stripe.Price.create(product=product.id, unit_amount=int(amount * 100), currency=currency)
             link = stripe.PaymentLink.create(line_items=[{"price": price.id, "quantity": 1}])
@@ -89,7 +90,7 @@ class PaymentGateway:
         if payment_id in self.local_payments:
             return self.local_payments[payment_id]["status"]
 
-        if stripe and self.stripe_api_key and payment_id.startswith("pi_"):
+        if stripe and self.is_valid_stripe_key and payment_id.startswith("pi_"):
             intent = stripe.PaymentIntent.retrieve(payment_id)
             return intent.status
 
@@ -105,7 +106,9 @@ class PaymentGateway:
     def verify_crypto_payment(self, tx_hash: str) -> bool:
         """Verify shape and basic integrity of crypto transaction hash."""
         normalized = tx_hash.lower().strip()
-        return normalized.startswith("0x") and len(normalized) >= 18 or normalized.startswith("btc_")
+        is_eth_like = normalized.startswith("0x") and len(normalized) >= 18
+        is_btc_like = normalized.startswith("btc_") and len(normalized) >= 18
+        return is_eth_like or is_btc_like
 
     def handle_webhook(self, payload: bytes, sig_header: str | None = None) -> dict[str, Any]:
         """Handle Stripe webhook payload and update payment status."""
