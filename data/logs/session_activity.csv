@@ -1,0 +1,3 @@
+timestamp,account,action,target,status,details,session_id
+2026-04-19T14:26:34.371718+00:00,demo_user,search_user,target_792,success,search completed,mock-c1bbad04-e678-41f6-98c2-8f467c06eef5
+2026-04-19T14:26:35.111982+00:00,demo_user,add_friend,target_792,success,friend added,mock-c1bbad04-e678-41f6-98c2-8f467c06eef5
