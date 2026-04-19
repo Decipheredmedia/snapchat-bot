@@ -54,3 +54,12 @@ auth:
 logging:
   level: INFO
   path: data/logs/session_activity.csv
+
+automation:
+  target_usernames:
+    - growth_target_1
+    - growth_target_2
+    - growth_target_3
+  search_failure_rate: 0.08
+  add_failure_rate: 0.05
+  snap_failure_rate: 0.08

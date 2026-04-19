@@ -32,6 +32,8 @@ class AddFlow:
         self.pause_min = int(rate.get("pause_interval_min_seconds", 30))
         self.pause_max = int(rate.get("pause_interval_max_seconds", 120))
         self.cooldown_minutes = int(rate.get("cooldown_minutes", 45))
+        self.search_failure_rate = float(cfg.get("automation", {}).get("search_failure_rate", 0.08))
+        self.add_failure_rate = float(cfg.get("automation", {}).get("add_failure_rate", 0.05))
         self.history: dict[str, list[datetime]] = {}
         self.cooldowns: dict[str, datetime] = {}
         self.log_file = Path("data/logs/session_activity.csv")
@@ -77,7 +79,7 @@ class AddFlow:
         if session is None:
             raise RuntimeError("No active session")
         GestureSimulator.random_pause(0.5, 2.2)
-        found = random.random() > 0.08
+        found = random.random() > self.search_failure_rate
         self._append_log(account["username"], "search_user", query, "success" if found else "failure", "search completed", getattr(session, "session_id", ""))
         return found
 
@@ -103,7 +105,7 @@ class AddFlow:
                 return False
 
             GestureSimulator.random_pause(0.5, 3.0)
-            success = random.random() > 0.05
+            success = random.random() > self.add_failure_rate
             if success:
                 self._record_add(account_name)
                 self.account_manager.increment_add_count(account_name)

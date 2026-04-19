@@ -65,9 +65,11 @@ def automation_loop(
     chat_responder: ChatResponder,
     upsell_strategy: UpsellStrategy,
     dry_run: bool,
+    target_usernames: list[str],
 ) -> None:
     """Main orchestration loop for accounts."""
     logger = logging.getLogger("automation_loop")
+    safe_targets = target_usernames or ["growth_target_1"]
     while not stop_event.is_set():
         accounts = account_manager.list_active_accounts()
         for account in accounts:
@@ -85,7 +87,8 @@ def automation_loop(
                     account_manager.update_session_status(username, "running")
 
                 # add-flow task
-                add_flow.add_friend(account, f"target_{int(time.time()) % 1000}")
+                target_username = safe_targets[int(time.time()) % len(safe_targets)]
+                add_flow.add_friend(account, target_username)
 
                 # snap task (dry-run uses placeholder media)
                 media_path = "demo_snap.txt"
@@ -172,7 +175,17 @@ if __name__ == "__main__":
 
     loop_thread = threading.Thread(
         target=automation_loop,
-        args=(account_manager, session_manager, proxy_manager, add_flow, snap_sender, chat_responder, upsell_strategy, args.dry_run),
+        args=(
+            account_manager,
+            session_manager,
+            proxy_manager,
+            add_flow,
+            snap_sender,
+            chat_responder,
+            upsell_strategy,
+            args.dry_run,
+            cfg.get("automation", {}).get("target_usernames", ["growth_target_1"]),
+        ),
         daemon=True,
     )
     loop_thread.start()

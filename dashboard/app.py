@@ -43,13 +43,13 @@ def dashboard_home() -> str:
 @app.get("/components/{name}")
 def serve_component(name: str) -> FileResponse:
     """Serve frontend dashboard JS components."""
-    allowed_files = {"AccountHealth.js", "SnapStatus.js"}
-    if name not in allowed_files:
+    component_map = {
+        "AccountHealth.js": Path("dashboard/components/AccountHealth.js").resolve(),
+        "SnapStatus.js": Path("dashboard/components/SnapStatus.js").resolve(),
+    }
+    path = component_map.get(name)
+    if path is None:
         raise HTTPException(status_code=404, detail="Component not found")
-    base_dir = Path("dashboard/components").resolve()
-    path = (base_dir / name).resolve()
-    if base_dir not in path.parents:
-        raise HTTPException(status_code=400, detail="Invalid component path")
     return FileResponse(path)
 
 

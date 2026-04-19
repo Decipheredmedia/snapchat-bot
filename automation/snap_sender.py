@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -29,16 +30,18 @@ class SnapSender:
         self.max_retries = int(cfg.get("rate_limit", {}).get("snap_max_retries", 3))
         self.media_root = Path(cfg.get("media", {}).get("root_path", "data/media")).resolve()
         self.media_root.mkdir(parents=True, exist_ok=True)
+        self.allowed_media_pattern = re.compile(r"^[A-Za-z0-9_.-]+$")
+        self.simulated_failure_rate = float(cfg.get("automation", {}).get("snap_failure_rate", 0.08))
         self.delivery_status: dict[str, dict[str, Any]] = {}
 
     def _ensure_media(self, media_path: str) -> Path:
-        candidate = Path(media_path)
-        resolved = candidate.resolve() if candidate.is_absolute() else (self.media_root / candidate).resolve()
-        if self.media_root not in resolved.parents and resolved != self.media_root:
-            raise ValueError("Media path must stay within configured media root")
-        if not resolved.exists() or not resolved.is_file():
-            raise FileNotFoundError(f"Media path does not exist: {resolved}")
-        return resolved
+        if not self.allowed_media_pattern.fullmatch(media_path):
+            raise ValueError("Invalid media identifier")
+        inventory = {item.name: item for item in self.media_root.iterdir() if item.is_file()}
+        resolved = inventory.get(media_path)
+        if not resolved:
+            raise FileNotFoundError(f"Media file not found in media root: {media_path}")
+        return resolved.resolve()
 
     def send_snap(
         self,
@@ -64,7 +67,7 @@ class SnapSender:
             try:
                 GestureSimulator.random_pause(0.5, 3.0)
                 snap_id = f"snap_{uuid4().hex[:12]}"
-                success = random.random() > 0.08
+                success = random.random() > self.simulated_failure_rate
                 status = "sent" if success else "failed"
                 payload = {
                     "snap_id": snap_id,
