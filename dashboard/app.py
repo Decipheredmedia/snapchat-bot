@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
 from api.routes import account_manager, get_stats
@@ -43,7 +43,13 @@ def dashboard_home() -> str:
 @app.get("/components/{name}")
 def serve_component(name: str) -> FileResponse:
     """Serve frontend dashboard JS components."""
-    path = Path("dashboard/components") / name
+    allowed_files = {"AccountHealth.js", "SnapStatus.js"}
+    if name not in allowed_files:
+        raise HTTPException(status_code=404, detail="Component not found")
+    base_dir = Path("dashboard/components").resolve()
+    path = (base_dir / name).resolve()
+    if base_dir not in path.parents:
+        raise HTTPException(status_code=400, detail="Invalid component path")
     return FileResponse(path)
 
 

@@ -40,6 +40,9 @@ ai:
     max_context_messages: 20
     safe_mode: true
 
+media:
+  root_path: data/media
+
 celery:
   broker_url: redis://localhost:6379/0
   result_backend: redis://localhost:6379/1

@@ -88,7 +88,7 @@ def automation_loop(
                 add_flow.add_friend(account, f"target_{int(time.time()) % 1000}")
 
                 # snap task (dry-run uses placeholder media)
-                media_path = "README.md" if dry_run else "README.md"
+                media_path = "demo_snap.txt"
                 snap_sender.send_snap(account, "sample_recipient", media_path, caption="Daily update")
 
                 # chat/upsell task
@@ -153,6 +153,11 @@ if __name__ == "__main__":
     snap_sender = SnapSender(session_manager=session_manager, payment_gateway=payment_gateway, config_path=args.config)
     chat_responder = ChatResponder(config_path=args.config)
     upsell_strategy = UpsellStrategy()
+    media_root = Path(cfg.get("media", {}).get("root_path", "data/media"))
+    media_root.mkdir(parents=True, exist_ok=True)
+    placeholder_media = media_root / "demo_snap.txt"
+    if not placeholder_media.exists():
+        placeholder_media.write_text("Demo snap payload", encoding="utf-8")
 
     if args.accounts:
         existing = {a["username"] for a in account_manager.list_active_accounts()}

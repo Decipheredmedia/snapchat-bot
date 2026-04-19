@@ -27,11 +27,18 @@ class SnapSender:
         with open(config_path, "r", encoding="utf-8") as handle:
             cfg = yaml.safe_load(handle) or {}
         self.max_retries = int(cfg.get("rate_limit", {}).get("snap_max_retries", 3))
+        self.media_root = Path(cfg.get("media", {}).get("root_path", "data/media")).resolve()
+        self.media_root.mkdir(parents=True, exist_ok=True)
         self.delivery_status: dict[str, dict[str, Any]] = {}
 
-    def _ensure_media(self, media_path: str) -> None:
-        if not Path(media_path).exists():
-            raise FileNotFoundError(f"Media path does not exist: {media_path}")
+    def _ensure_media(self, media_path: str) -> Path:
+        candidate = Path(media_path)
+        resolved = candidate.resolve() if candidate.is_absolute() else (self.media_root / candidate).resolve()
+        if self.media_root not in resolved.parents and resolved != self.media_root:
+            raise ValueError("Media path must stay within configured media root")
+        if not resolved.exists() or not resolved.is_file():
+            raise FileNotFoundError(f"Media path does not exist: {resolved}")
+        return resolved
 
     def send_snap(
         self,
@@ -42,7 +49,7 @@ class SnapSender:
         link: str | None = None,
     ) -> dict[str, Any]:
         """Send one snap with retries and optional link embedding."""
-        self._ensure_media(media_path)
+        resolved_media_path = self._ensure_media(media_path)
         final_caption = caption or ""
         if link:
             final_caption = f"{final_caption} {link}".strip()
@@ -63,7 +70,7 @@ class SnapSender:
                     "snap_id": snap_id,
                     "account": account["username"],
                     "recipient": recipient,
-                    "media_path": media_path,
+                    "media_path": str(resolved_media_path),
                     "caption": final_caption,
                     "status": status,
                     "session_id": getattr(session, "session_id", ""),
@@ -82,7 +89,7 @@ class SnapSender:
             "snap_id": failed_id,
             "account": account["username"],
             "recipient": recipient,
-            "media_path": media_path,
+            "media_path": str(resolved_media_path),
             "caption": final_caption,
             "status": "failed",
             "session_id": getattr(session, "session_id", ""),
