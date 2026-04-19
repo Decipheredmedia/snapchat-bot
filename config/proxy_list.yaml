@@ -1,0 +1,19 @@
+proxies:
+  - host: 10.10.10.11
+    port: 8000
+    username: user_a
+    password: pass_a
+    type: residential
+    assigned_account: null
+  - host: 10.10.10.12
+    port: 8001
+    username: user_b
+    password: pass_b
+    type: residential
+    assigned_account: null
+  - host: 10.10.10.13
+    port: 8002
+    username: user_c
+    password: pass_c
+    type: mobile
+    assigned_account: null

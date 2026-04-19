@@ -1,0 +1,53 @@
+database:
+  host: localhost
+  port: 5432
+  name: snapchat_bot
+  user: your_db_user
+  password: your_db_password
+  echo: false
+
+appium:
+  host: 127.0.0.1
+  port: 4723
+  path: /wd/hub
+  desired_capabilities_template:
+    platformName: Android
+    automationName: UiAutomator2
+    newCommandTimeout: 120
+
+proxy:
+  rotation_interval_seconds: 1800
+  type: residential
+  healthcheck_timeout_seconds: 3
+
+rate_limit:
+  max_adds_per_hour: 40
+  pause_interval_min_seconds: 30
+  pause_interval_max_seconds: 120
+  cooldown_minutes: 45
+
+payment:
+  stripe_api_key: sk_test_replace_me
+  stripe_webhook_secret: whsec_replace_me
+  default_currency: usd
+  crypto:
+    btc_wallet: btc_wallet_placeholder
+    eth_wallet: eth_wallet_placeholder
+
+ai:
+  model_path: ai/models/chat_responder.keras
+  conversation_rules:
+    max_context_messages: 20
+    safe_mode: true
+
+celery:
+  broker_url: redis://localhost:6379/0
+  result_backend: redis://localhost:6379/1
+
+auth:
+  api_keys:
+    - dev-local-key
+
+logging:
+  level: INFO
+  path: data/logs/session_activity.csv
